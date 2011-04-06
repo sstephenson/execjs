@@ -1,5 +1,7 @@
 module ExecJS
   module Runtimes
+    Mustang = MustangRuntime.new
+
     RubyRacer = RubyRacerRuntime.new
 
     RubyRhino = RubyRhinoRuntime.new
@@ -36,6 +38,7 @@ module ExecJS
 
     def self.runtimes
       @runtimes ||= [
+        Mustang,
         RubyRacer,
         RubyRhino,
         Node,
