@@ -71,7 +71,7 @@ module ExecJS
 
     def available?
       require "v8"
-      true
+      Mustang.nil?
     rescue LoadError
       false
     end
