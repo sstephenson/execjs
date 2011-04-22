@@ -117,9 +117,10 @@ module ExecJS
           result = if ExecJS.windows?
             `#{ExecJS.root}/support/which.bat #{name}`
           else
-            `which #{name} 2>&1`
+            `which #{name} 2>/dev/null`
           end
-          result.strip.split("\n").first
+					# If the string is empty then the command is not in the $PATH.
+					!result.empty?
         end
       end
 
