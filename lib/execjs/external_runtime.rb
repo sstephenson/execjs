@@ -1,4 +1,3 @@
-require "json"
 require "tempfile"
 
 module ExecJS
@@ -11,7 +10,7 @@ module ExecJS
 
       def eval(source, options = {})
         if /\S/ =~ source
-          exec("return eval(#{"(#{source})".to_json})")
+          exec("return eval(#{MultiJson.encode("(#{source})")})")
         end
       end
 
@@ -22,7 +21,7 @@ module ExecJS
       end
 
       def call(identifier, *args)
-        eval "#{identifier}.apply(this, #{args.to_json})"
+        eval "#{identifier}.apply(this, #{MultiJson.encode(args)})"
       end
 
       protected
@@ -47,7 +46,7 @@ module ExecJS
         end
 
         def extract_result(output)
-          status, value = output.empty? ? [] : JSON.parse(output)
+          status, value = output.empty? ? [] : MultiJson.decode(output)
           if status == "ok"
             value
           else
@@ -83,6 +82,7 @@ module ExecJS
     end
 
     def available?
+      require "multi_json"
       @binary ? true : false
     end
 

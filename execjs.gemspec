@@ -25,6 +25,7 @@ Gem::Specification.new do |s|
     "README.md"
   ]
 
+  s.add_dependency "multi_json", ">=1.0.0"
   s.add_development_dependency "mustang"
   s.add_development_dependency "therubyracer"
   s.add_development_dependency "therubyrhino"
