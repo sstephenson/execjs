@@ -26,7 +26,7 @@ module ExecJS
 
       protected
         def compile_to_tempfile(source)
-          tempfile = Tempfile.open("execjs")
+          tempfile = Tempfile.open(["execjs",".js"])
           tempfile.write compile(source)
           tempfile.close
           yield tempfile
