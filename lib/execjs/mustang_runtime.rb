@@ -7,7 +7,7 @@ module ExecJS
       end
 
       def exec(source, options = {})
-        souce = source.encode('UTF-8') if source.respond_to?(:encode)
+        source = source.encode('UTF-8') if source.respond_to?(:encode)
 
         if /\S/ =~ source
           eval "(function(){#{source}})()", options
@@ -15,7 +15,7 @@ module ExecJS
       end
 
       def eval(source, options = {})
-        souce = source.encode('UTF-8') if source.respond_to?(:encode)
+        source = source.encode('UTF-8') if source.respond_to?(:encode)
 
         if /\S/ =~ source
           unbox @v8_context.eval("(#{source})")
