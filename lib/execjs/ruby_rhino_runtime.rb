@@ -2,8 +2,7 @@ module ExecJS
   class RubyRhinoRuntime
     class Context
       def initialize(source = "")
-        @rhino_context = ::Rhino::Context.new
-        @rhino_context.eval(source)
+        @source = source
       end
 
       def exec(source, options = {})
@@ -18,7 +17,9 @@ module ExecJS
         source = source.encode('UTF-8') if source.respond_to?(:encode)
 
         if /\S/ =~ source
-          unbox @rhino_context.eval("(#{source})")
+          rhino_context = ::Rhino::Context.new
+          rhino_context.eval(@source)
+          unbox rhino_context.eval("(#{source})")
         end
       rescue ::Rhino::JavascriptError => e
         if e.message == "syntax error"
@@ -29,7 +30,9 @@ module ExecJS
       end
 
       def call(properties, *args)
-        unbox @rhino_context.eval(properties).call(*args)
+        rhino_context = ::Rhino::Context.new
+        rhino_context.eval(@source)
+        unbox rhino_context.eval(properties).call(*args)
       rescue ::Rhino::JavascriptError => e
         if e.message == "syntax error"
           raise RuntimeError, e.message
