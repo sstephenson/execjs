@@ -2,8 +2,7 @@ module ExecJS
   class MustangRuntime
     class Context
       def initialize(source = "")
-        @v8_context = ::Mustang::Context.new
-        @v8_context.eval(source)
+        @source = source
       end
 
       def exec(source, options = {})
@@ -18,12 +17,16 @@ module ExecJS
         source = source.encode('UTF-8') if source.respond_to?(:encode)
 
         if /\S/ =~ source
-          unbox @v8_context.eval("(#{source})")
+          v8_context = ::Mustang::Context.new
+          v8_context.eval(@source)
+          unbox v8_context.eval("(#{source})")
         end
       end
 
       def call(properties, *args)
-        unbox @v8_context.eval(properties).call(*args)
+        v8_context = ::Mustang::Context.new
+        v8_context.eval(@source)
+        unbox v8_context.eval(properties).call(*args)
       rescue NoMethodError => e
         raise ProgramError, e.message
       end

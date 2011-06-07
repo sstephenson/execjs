@@ -2,8 +2,7 @@ module ExecJS
   class RubyRacerRuntime
     class Context
       def initialize(source = "")
-        @v8_context = ::V8::Context.new
-        @v8_context.eval(source)
+        @source = source
       end
 
       def exec(source, options = {})
@@ -18,7 +17,9 @@ module ExecJS
         source = source.encode('UTF-8') if source.respond_to?(:encode)
 
         if /\S/ =~ source
-          unbox @v8_context.eval("(#{source})")
+          v8_context = ::V8::Context.new
+          v8_context.eval(@source)
+          unbox v8_context.eval("(#{source})")
         end
       rescue ::V8::JSError => e
         if e.value["name"] == "SyntaxError"
@@ -29,7 +30,9 @@ module ExecJS
       end
 
       def call(properties, *args)
-        unbox @v8_context.eval(properties).call(*args)
+        v8_context = ::V8::Context.new
+        v8_context.eval(@source)
+        unbox v8_context.eval(properties).call(*args)
       rescue ::V8::JSError => e
         if e.value["name"] == "SyntaxError"
           raise RuntimeError, e.message
