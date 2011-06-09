@@ -1,4 +1,3 @@
-require "execjs/module"
 require "execjs/external_runtime"
 require "execjs/mustang_runtime"
 require "execjs/ruby_racer_runtime"
@@ -77,9 +76,5 @@ module ExecJS
         JScript
       ]
     end
-  end
-
-  def self.runtimes
-    Runtimes.runtimes
   end
 end
