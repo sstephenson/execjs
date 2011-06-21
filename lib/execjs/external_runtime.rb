@@ -123,7 +123,7 @@ module ExecJS
           result = if ExecJS.windows?
             `#{ExecJS.root}/support/which.bat #{name}`
           else
-            `which #{name} 2>/dev/null`
+            `command -v #{name} 2>/dev/null`
           end
 
           if path = result.strip.split("\n").first
