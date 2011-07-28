@@ -126,7 +126,7 @@ module ExecJS
             `command -v #{name} 2>/dev/null`
           end
 
-          if path = result.strip.split("\n").first
+          if path = result.strip.split("\n").first and File.exist?(path)
             return args ? "#{path} #{args}" : path
           end
         end
