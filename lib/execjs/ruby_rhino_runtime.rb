@@ -50,6 +50,12 @@ module ExecJS
             vs[k] = unbox(v) unless v.is_a?(::Rhino::NativeFunction)
             vs
           end
+        when ::Array
+          value.map { |v| unbox(v) }
+        when ::Java::OrgMozillaJavascript::NativeObject
+          unbox(::Rhino::NativeObject.new(value))
+        when ::Java::OrgMozillaJavascript::NativeArray
+          unbox(::Rhino::To.array(value))
         else
           value
         end

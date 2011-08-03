@@ -115,7 +115,9 @@ class TestRuntime < Test::Unit::TestCase
   def test_nested_unbox
     [
       [{'foo'=>{}}, "{foo:{}}"], [{'foo'=>[]}, "{foo:[]}"],
-      [[{}],"[{}]"], [[[]],"[[]]"]
+      [{'foo'=>{'bar'=>{}}}, "{foo:{bar:{}}}"], [{'foo'=>[[1,{}]]}, "{foo:[[1,{}]]}"],
+      [[{}],"[{}]"], [[[]],"[[]]"],
+      [[{},[[[],{}]]],"[{},[[[],{}]]]"], [[[]],"[[]]"]
     ].each do |expected,source|
       assert_equal expected, @runtime.eval(source)
     end
