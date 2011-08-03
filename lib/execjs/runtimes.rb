@@ -24,8 +24,7 @@ module ExecJS
     JavaScriptCore = ExternalRuntime.new(
       :name        => "JavaScriptCore",
       :command     => "/System/Library/Frameworks/JavaScriptCore.framework/Versions/A/Resources/jsc",
-      :runner_path => ExecJS.root + "/support/basic_runner.js",
-      :conversion => { :from => "ISO8859-1", :to => "UTF-8" }
+      :runner_path => ExecJS.root + "/support/jsc_runner.js"
     )
 
     SpiderMonkey = Spidermonkey = ExternalRuntime.new(

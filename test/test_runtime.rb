@@ -18,6 +18,7 @@ class TestRuntime < Test::Unit::TestCase
     assert_equal({"a"=>1,"b"=>2}, @runtime.exec("return {a:1,b:2}"))
     assert_equal "café", @runtime.exec("return 'café'")
     assert_equal "☃", @runtime.exec('return "☃"')
+    assert_equal "☃", @runtime.exec('return "\u2603"')
     assert_equal "\\", @runtime.exec('return "\\\\"')
   end
 
@@ -35,6 +36,7 @@ class TestRuntime < Test::Unit::TestCase
     assert_equal({"a"=>true}, @runtime.eval("{a:true,b:function (){}}"))
     assert_equal "café", @runtime.eval("'café'")
     assert_equal "☃", @runtime.eval('"☃"')
+    assert_equal "☃", @runtime.eval('"\u2603"')
     assert_equal "\\", @runtime.eval('"\\\\"')
   end
 
