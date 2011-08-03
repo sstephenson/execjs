@@ -34,6 +34,22 @@ class TestRuntime < Test::Unit::TestCase
     assert_equal "café", @runtime.eval("'café'")
     assert_equal "☃", @runtime.eval('"☃"')
     assert_equal "\\", @runtime.eval('"\\\\"')
+    
+    # nested unboxing - top level object
+    assert_equal({'foo'=>{}}, @runtime.eval("{foo:{}}"))
+    assert_equal({'foo'=>[]}, @runtime.eval("{foo:[]}"))
+    assert_equal({'foo'=>{'bar'=>{}}}, @runtime.eval("{foo:{bar:{}}}"))
+    assert_equal({'foo'=>[]}, @runtime.eval("{foo:[]}"))
+    assert_equal({'foo'=>[[1,{}]]}, @runtime.eval("{foo:[[1,{}]]}"))
+    
+    # nested unboxing - top level array
+    assert_equal [{}], @runtime.eval("[{}]")
+    assert_equal [[]], @runtime.eval("[[]]")
+    assert_equal [{},[[[],{}]]], @runtime.eval("[{},[[[],{}]]]")
+    assert_equal [[]], @runtime.eval("[[]]")
+    
+    # nested unboxing - nested functions
+    assert_equal({'foo'=>{}}, @runtime.eval("{f:function(){},foo:{g:function(){}}}"))    
   end
 
   if defined? Encoding
@@ -100,27 +116,6 @@ class TestRuntime < Test::Unit::TestCase
   def test_thrown_exception
     assert_raise ExecJS::ProgramError do
       @runtime.exec("throw 'hello'")
-    end
-  end
-  
-  def test_simple_unbox
-    [
-      [{},"{}"], [{'foo'=>'bar'}, "{foo:'bar'}"],
-      [[],"[]"], [[1,2,3],"[1,2,3]"]
-    ].each do |expected,source|
-      assert_equal expected, @runtime.eval(source)
-    end
-  end
-  
-  def test_nested_unbox
-    [
-      [{'foo'=>{}}, "{foo:{}}"], [{'foo'=>[]}, "{foo:[]}"],
-      [{'foo'=>{'bar'=>{}}}, "{foo:{bar:{}}}"], [{'foo'=>[[1,{}]]}, "{foo:[[1,{}]]}"],
-      [[{}],"[{}]"], [[[]],"[[]]"],
-      [[{},[[[],{}]]],"[{},[[[],{}]]]"], [[[]],"[[]]"],
-      [{'foo'=>{}}, "{f:function(){},foo:{g:function(){}}}"]
-    ].each do |expected,source|
-      assert_equal expected, @runtime.eval(source)
     end
   end
   
