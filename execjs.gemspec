@@ -22,6 +22,7 @@ Gem::Specification.new do |s|
     "lib/execjs/ruby_rhino_runtime.rb",
     "lib/execjs/runtimes.rb",
     "lib/execjs/support/basic_runner.js",
+    "lib/execjs/support/jsc_runner.js",
     "lib/execjs/support/jscript_runner.js",
     "lib/execjs/support/json2.js",
     "lib/execjs/support/node_runner.js",
