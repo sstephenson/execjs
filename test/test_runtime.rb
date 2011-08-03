@@ -102,4 +102,26 @@ class TestRuntime < Test::Unit::TestCase
       @runtime.exec("throw 'hello'")
     end
   end
+  
+  def test_simple_unbox
+    [
+      [{},"{}"], [{'foo'=>'bar'}, "{foo:'bar'}"],
+      [[],"[]"], [[1,2,3],"[1,2,3]"]
+    ].each do |expected,source|
+      assert_equal expected, @runtime.eval(source)
+    end
+  end
+  
+  def test_nested_unbox
+    [
+      [{'foo'=>{}}, "{foo:{}}"], [{'foo'=>[]}, "{foo:[]}"],
+      [{'foo'=>{'bar'=>{}}}, "{foo:{bar:{}}}"], [{'foo'=>[[1,{}]]}, "{foo:[[1,{}]]}"],
+      [[{}],"[{}]"], [[[]],"[[]]"],
+      [[{},[[[],{}]]],"[{},[[[],{}]]]"], [[[]],"[[]]"],
+      [{'foo'=>{}}, "{f:function(){},foo:{g:function(){}}}"]
+    ].each do |expected,source|
+      assert_equal expected, @runtime.eval(source)
+    end
+  end
+  
 end
