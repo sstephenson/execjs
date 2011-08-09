@@ -143,7 +143,7 @@ module ExecJS
         Array(command).each do |name|
           name, args = name.split(/\s+/, 2)
           result = if ExecJS.windows?
-            `#{ExecJS.root}/support/which.bat #{name}`
+            `"#{ExecJS.root}/support/which.bat" #{name}`
           else
             `command -v #{name} 2>/dev/null`
           end
