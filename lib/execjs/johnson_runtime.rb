@@ -87,6 +87,8 @@ module ExecJS
     def name
       "Johnson (SpiderMonkey)"
     end
+    
+    def supports_async?; false; end
 
     def exec(source)
       context = Context.new
@@ -98,7 +100,7 @@ module ExecJS
       context.eval(source)
     end
 
-    def compile(source)
+    def compile(source, options={})
       Context.new(source)
     end
 

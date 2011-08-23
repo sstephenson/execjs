@@ -23,8 +23,8 @@ module ExecJS
       runtime.eval(source)
     end
 
-    def compile(source)
-      runtime.compile(source)
+    def compile(source, options={})
+      runtime.compile(source, options)
     end
 
     def root

@@ -87,9 +87,11 @@ module ExecJS
       context.eval(source)
     end
 
-    def compile(source)
+    def compile(source, options={})
       Context.new(source)
     end
+    
+    def supports_async?; false; end
 
     def available?
       require "rhino"

@@ -3,11 +3,12 @@ require "tempfile"
 module ExecJS
   class ExternalRuntime
     class Context
-      def initialize(runtime, source = "")
+      def initialize(runtime, source = "", options={})
         source = source.encode('UTF-8') if source.respond_to?(:encode)
 
         @runtime = runtime
         @source  = source
+        @async   = options[:async]
       end
 
       def eval(source, options = {})
@@ -41,7 +42,7 @@ module ExecJS
         end
 
         def compile(source)
-          @runtime.send(:runner_source).dup.tap do |output|
+          @runtime.send(:runner_source, @async).dup.tap do |output|
             output.sub!('#{source}') do
               source
             end
@@ -86,12 +87,13 @@ module ExecJS
     attr_reader :name
 
     def initialize(options)
-      @name        = options[:name]
-      @command     = options[:command]
-      @runner_path = options[:runner_path]
-      @test_args   = options[:test_args]
-      @test_match  = options[:test_match]
-      @binary      = locate_binary
+      @name              = options[:name]
+      @command           = options[:command]
+      @runner_path       = options[:runner_path]
+      @async_runner_path = options[:async_runner_path]
+      @test_args         = options[:test_args]
+      @test_match        = options[:test_match]
+      @binary            = locate_binary
     end
 
     def exec(source)
@@ -104,18 +106,24 @@ module ExecJS
       context.eval(source)
     end
 
-    def compile(source)
-      Context.new(self, source)
+    def compile(source, options={})
+      Context.new(self, source, options)
     end
 
     def available?
       require "multi_json"
       @binary ? true : false
     end
+    
+    def supports_async?; true; end
 
     protected
-      def runner_source
-        @runner_source ||= IO.read(@runner_path)
+      def runner_source(async=false)
+        if async
+          @async_runner_source ||= IO.read(@async_runner_path)
+        else
+          @runner_source ||= IO.read(@runner_path)
+        end
       end
 
       def exec_runtime(filename)
