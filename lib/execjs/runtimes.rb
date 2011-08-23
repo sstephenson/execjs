@@ -16,9 +16,10 @@ module ExecJS
     Mustang = MustangRuntime.new
 
     Node = ExternalRuntime.new(
-      :name        => "Node.js (V8)",
-      :command     => ["nodejs", "node"],
-      :runner_path => ExecJS.root + "/support/node_runner.js"
+      :name              => "Node.js (V8)",
+      :command           => ["nodejs", "node"],
+      :runner_path       => ExecJS.root + "/support/node_runner.js",
+      :async_runner_path => ExecJS.root + "/support/node_runner_async.js"
     )
 
     JavaScriptCore = ExternalRuntime.new(

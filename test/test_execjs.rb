@@ -33,6 +33,13 @@ class TestExecJS < Test::Unit::TestCase
     assert_equal "bar", context.exec("return foo()")
     assert_equal "bar", context.eval("foo()")
   end
+  
+  def test_compile_async
+    if ExecJS.runtime.supports_async?
+      context = ExecJS.compile("foo = function() { callback('bar') }", :async => true)
+      assert_equal "bar", context.eval("foo()")
+    end
+  end
 
   def test_context_call
     context = ExecJS.compile("id = function(v) { return v; }")
