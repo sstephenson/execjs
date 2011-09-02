@@ -23,7 +23,7 @@ module ExecJS
 
     JavaScriptCore = ExternalRuntime.new(
       :name        => "JavaScriptCore",
-      :command     => "/System/Library/Frameworks/JavaScriptCore.framework/Versions/A/Resources/jsc",
+      :command     => ["/System/Library/Frameworks/JavaScriptCore.framework/Versions/A/Resources/jsc", "jsc"],
       :runner_path => ExecJS.root + "/support/jsc_runner.js"
     )
 
