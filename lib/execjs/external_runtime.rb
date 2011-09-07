@@ -91,6 +91,7 @@ module ExecJS
       @runner_path = options[:runner_path]
       @test_args   = options[:test_args]
       @test_match  = options[:test_match]
+      @encoding    = options[:encoding]
       @binary      = locate_binary
     end
 
@@ -120,7 +121,25 @@ module ExecJS
 
       def exec_runtime(filename)
         output = nil
-        IO.popen("#{@binary} #{filename} 2>&1") { |f| output = f.read }
+
+        cmd = "#{@binary} #{filename} 2>&1"
+
+        if @encoding
+          if "".respond_to?(:encode)
+            IO.popen(cmd, :internal_encoding => 'UTF-8', :external_encoding => @encoding) do |f|
+              output = f.read
+            end
+          else
+            require 'iconv'
+            IO.popen(cmd) do |f|
+              ic = Iconv.new('UTF-8', @encoding)
+              output = ic.iconv(f.read)
+            end
+          end
+        else
+          IO.popen(cmd){|f| output = f.read }
+        end
+
         if $?.success?
           output
         else
@@ -154,5 +173,6 @@ module ExecJS
         end
         nil
       end
+
   end
 end
