@@ -120,7 +120,8 @@ module ExecJS
       end
 
       def exec_runtime(filename)
-        output = sh("#{@binary} #{filename} 2>&1")
+        filename = filename.gsub(/"/, "\\\"")
+        output = sh("#{@binary} \"#{filename}\" 2>&1")
         if $?.success?
           output
         else
