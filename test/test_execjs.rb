@@ -155,4 +155,20 @@ class TestExecJS < Test::Unit::TestCase
       ExecJS.exec("throw 'hello'")
     end
   end
+
+  def test_strange_tempdir
+    tempfile = Tempfile.new("test")
+    current_tempdir = File.dirname(tempfile.path)
+    tempfile.close
+    ["test&1", "test\"1"].each do |dir|
+      begin
+        dir = File.join(current_tempdir, "#{dir}")
+        Dir.mkdir(dir) unless Dir.exists?(dir)
+        ENV['TMPDIR'] = dir
+        assert_equal 0, ExecJS.exec("return 0")
+      ensure
+        Dir.rmdir dir
+      end
+    end
+  end
 end
