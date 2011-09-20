@@ -122,7 +122,7 @@ module ExecJS
       end
 
       def exec_runtime(filename)
-        output = sh("#{shell_escape(@binary, filename)} 2>&1")
+        output = sh("#{shell_escape(*(@binary.split(' ') << filename))} 2>&1")
         if $?.success?
           output
         else
@@ -182,7 +182,8 @@ module ExecJS
 
       if ExecJS.windows?
         def shell_escape(*args)
-          args.map { |arg| arg.inspect }.join(" ")
+          # see http://technet.microsoft.com/en-us/library/cc723564.aspx#XSLTsection123121120120
+          args.map { |arg| arg.gsub(/([&|()<>^ "])/,'^\1') }.join(" ")
         end
       else
         def shell_escape(*args)
