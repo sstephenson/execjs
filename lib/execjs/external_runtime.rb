@@ -183,7 +183,10 @@ module ExecJS
       if ExecJS.windows?
         def shell_escape(*args)
           # see http://technet.microsoft.com/en-us/library/cc723564.aspx#XSLTsection123121120120
-          args.map { |arg| arg.gsub(/([&|()<>^ "])/,'^\1') }.join(" ")
+          args.map { |arg|
+            arg = %Q("#{arg.gsub('"','""')}") if arg.match(/[&|()<>^ "]/)
+            arg
+          }.join(" ")
         end
       else
         def shell_escape(*args)
