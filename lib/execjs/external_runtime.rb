@@ -94,7 +94,7 @@ module ExecJS
       @test_args   = options[:test_args]
       @test_match  = options[:test_match]
       @encoding    = options[:encoding]
-      @binary      = locate_binary
+      @binary      = nil
     end
 
     def exec(source)
@@ -113,8 +113,29 @@ module ExecJS
 
     def available?
       require "multi_json"
-      @binary ? true : false
+      binary ? true : false
     end
+
+    private
+      def binary
+        @binary ||= locate_binary
+      end
+
+      def which_windows(name)
+        result = `#{shell_escape("#{ExecJS.root}/support/which.bat", name)}`
+        result.strip.split("\n").first
+      end
+
+      def which_unix(name)
+        if File.executable? cmd
+          cmd
+        else
+          path = ENV['PATH'].split(File::PATH_SEPARATOR).find { |path|
+            File.executable? File.join(path, cmd)
+          }
+          path && File.expand_path(cmd, path)
+        end
+      end
 
     protected
       def runner_source
@@ -122,7 +143,7 @@ module ExecJS
       end
 
       def exec_runtime(filename)
-        output = sh("#{shell_escape(*(@binary.split(' ') << filename))} 2>&1")
+        output = sh("#{shell_escape(*(binary.split(' ') << filename))} 2>&1")
         if $?.success?
           output
         else
@@ -142,19 +163,14 @@ module ExecJS
       end
 
       def which(command)
-        Array(command).each do |name|
+        Array(command).find do |name|
           name, args = name.split(/\s+/, 2)
-          result = if ExecJS.windows?
-            `#{shell_escape("#{ExecJS.root}/support/which.bat", name)}`
-          else
-            `#{shell_escape('command', '-v', name)} 2>/dev/null`
-          end
+          path = ExecJS.windows? ? which_windows(name) : which_unix(name)
 
-          if path = result.strip.split("\n").first
-            return args ? "#{path} #{args}" : path
-          end
+          next unless path
+
+          args ? "#{path} #{args}" : path
         end
-        nil
       end
 
       if "".respond_to?(:force_encoding)
