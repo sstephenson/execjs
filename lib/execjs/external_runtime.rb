@@ -121,12 +121,11 @@ module ExecJS
         @binary ||= locate_binary
       end
 
-      def which_windows(name)
-        result = `#{shell_escape("#{ExecJS.root}/support/which.bat", name)}`
-        result.strip.split("\n").first
-      end
+      def locate_executable(cmd)
+        if ExecJS.windows? && File.extname(cmd) == ""
+          cmd << ".exe"
+        end
 
-      def which_unix(cmd)
         if File.executable? cmd
           cmd
         else
@@ -165,7 +164,7 @@ module ExecJS
       def which(command)
         Array(command).find do |name|
           name, args = name.split(/\s+/, 2)
-          path = ExecJS.windows? ? which_windows(name) : which_unix(name)
+          path = locate_executable(name)
 
           next unless path
 
