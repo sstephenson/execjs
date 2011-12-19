@@ -130,7 +130,8 @@ module ExecJS
           cmd
         else
           path = ENV['PATH'].split(File::PATH_SEPARATOR).find { |p|
-            File.executable? File.join(p, cmd)
+            full_path = File.join(p, cmd)
+            File.executable?(full_path) && File.file?(full_path)
           }
           path && File.expand_path(cmd, path)
         end
