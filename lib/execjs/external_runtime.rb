@@ -126,7 +126,7 @@ module ExecJS
           cmd << ".exe"
         end
 
-        if File.executable? cmd
+        if File.executable?(cmd) && File.file?(cmd)
           cmd
         else
           path = ENV['PATH'].split(File::PATH_SEPARATOR).find { |p|
