@@ -23,7 +23,7 @@ module ExecJS
         if /\S/ =~ source
           unbox @rhino_context.eval("(#{source})")
         end
-      rescue ::Rhino::JavascriptError => e
+      rescue ::Rhino::JSError => e
         if e.message == "syntax error"
           raise RuntimeError, e.message
         else
@@ -33,7 +33,7 @@ module ExecJS
 
       def call(properties, *args)
         unbox @rhino_context.eval(properties).call(*args)
-      rescue ::Rhino::JavascriptError => e
+      rescue ::Rhino::JSError => e
         if e.message == "syntax error"
           raise RuntimeError, e.message
         else
@@ -42,13 +42,13 @@ module ExecJS
       end
 
       def unbox(value)
-        case value = ::Rhino::To.ruby(value)
-        when ::Rhino::NativeFunction
+        case value = ::Rhino.to_ruby(value)
+        when ::Rhino::JS::BaseFunction
           nil
-        when ::Rhino::NativeObject
+        when ::Rhino::JS::NativeObject
           value.inject({}) do |vs, (k, v)|
             case v
-            when ::Rhino::NativeFunction, ::Rhino::J::Function
+            when ::Rhino::JS::BaseFunction
               nil
             else
               vs[k] = unbox(v)
