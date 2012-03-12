@@ -13,6 +13,11 @@ tests = namespace :test do |tests|
 
     Rake::TestTask.new(name.downcase) do |t|
       t.libs << "test"
+      if name == :Disabled
+        t.test_files = FileList['test/test_disabled_runtime.rb']
+      else
+        t.test_files = FileList['test/test_runtime.rb']
+      end
       t.warning = true
     end
   end

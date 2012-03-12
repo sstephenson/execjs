@@ -9,7 +9,7 @@ rescue ExecJS::RuntimeUnavailable => e
   exit 2
 end
 
-class TestExecJS < Test::Unit::TestCase
+class TestRuntime < Test::Unit::TestCase
   def test_runtime_available
     runtime = ExecJS::ExternalRuntime.new(:command => "nonexistent")
     assert !runtime.available?
