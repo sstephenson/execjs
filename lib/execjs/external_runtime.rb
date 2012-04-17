@@ -15,7 +15,7 @@ module ExecJS
         source = source.encode('UTF-8') if source.respond_to?(:encode)
 
         if /\S/ =~ source
-          exec("return eval(#{MultiJson.encode("(#{source})")})")
+          exec("return eval(#{MultiJson.dump("(#{source})")})")
         end
       end
 
@@ -29,7 +29,7 @@ module ExecJS
       end
 
       def call(identifier, *args)
-        eval "#{identifier}.apply(this, #{MultiJson.encode(args)})"
+        eval "#{identifier}.apply(this, #{MultiJson.dump(args)})"
       end
 
       protected
@@ -49,7 +49,7 @@ module ExecJS
             end
             output.sub!('#{encoded_source}') do
               encoded_source = encode_unicode_codepoints(source)
-              MultiJson.encode("(function(){ #{encoded_source} })()")
+              MultiJson.dump("(function(){ #{encoded_source} })()")
             end
             output.sub!('#{json2_source}') do
               IO.read(ExecJS.root + "/support/json2.js")
@@ -58,7 +58,7 @@ module ExecJS
         end
 
         def extract_result(output)
-          status, value = output.empty? ? [] : MultiJson.decode(output)
+          status, value = output.empty? ? [] : MultiJson.load(output)
           if status == "ok"
             value
           elsif value =~ /SyntaxError:/
