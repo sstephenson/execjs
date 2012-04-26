@@ -14,10 +14,13 @@ Gem::Specification.new do |s|
   s.files = Dir["README.md", "LICENSE", "lib/**/*"]
 
   s.add_dependency "multi_json", "~>1.0"
-  s.add_development_dependency "johnson"
-  s.add_development_dependency "mustang"
+
+  unless defined?(JRUBY_VERSION)
+    s.add_development_dependency "johnson"
+    s.add_development_dependency "mustang"
+    s.add_development_dependency "therubyracer"
+  end
   s.add_development_dependency "rake"
-  s.add_development_dependency "therubyracer"
   s.add_development_dependency "therubyrhino"
 
   s.authors = ["Sam Stephenson", "Josh Peek"]
