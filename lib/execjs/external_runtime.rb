@@ -85,21 +85,19 @@ module ExecJS
           end
         end
 
-        if MultiJson.respond_to?(:load)
+        if MultiJson.respond_to?(:dump)
           def json_decode(obj)
             MultiJson.load(obj)
           end
-        else
-          def json_decode(obj)
-          MultiJson.decode(obj)
-          end
-        end
 
-        if MultiJson.respond_to?(:dump)
           def json_encode(obj)
             MultiJson.dump(obj)
           end
         else
+          def json_decode(obj)
+            MultiJson.decode(obj)
+          end
+
           def json_encode(obj)
             MultiJson.encode(obj)
           end
