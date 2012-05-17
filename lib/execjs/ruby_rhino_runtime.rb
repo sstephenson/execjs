@@ -2,7 +2,7 @@ module ExecJS
   class RubyRhinoRuntime
     class Context
       def initialize(source = "")
-        source = source.encode('UTF-8') if source.respond_to?(:encode)
+        source = ExecJS::encode(source) if source.respond_to?(:encode)
 
         @rhino_context = ::Rhino::Context.new
         fix_memory_limit! @rhino_context
@@ -10,7 +10,7 @@ module ExecJS
       end
 
       def exec(source, options = {})
-        source = source.encode('UTF-8') if source.respond_to?(:encode)
+        source = ExecJS::encode(source) if source.respond_to?(:encode)
 
         if /\S/ =~ source
           eval "(function(){#{source}})()", options
@@ -18,13 +18,13 @@ module ExecJS
       end
 
       def eval(source, options = {})
-        source = source.encode('UTF-8') if source.respond_to?(:encode)
+        source = ExecJS::encode(source) if source.respond_to?(:encode)
 
         if /\S/ =~ source
           unbox @rhino_context.eval("(#{source})")
         end
-      rescue ::Rhino::JavascriptError => e
-        if e.message == "syntax error"
+      rescue ::Rhino::JSError => e
+        if e.message =~ /^syntax error/
           raise RuntimeError, e.message
         else
           raise ProgramError, e.message
@@ -33,7 +33,7 @@ module ExecJS
 
       def call(properties, *args)
         unbox @rhino_context.eval(properties).call(*args)
-      rescue ::Rhino::JavascriptError => e
+      rescue ::Rhino::JSError => e
         if e.message == "syntax error"
           raise RuntimeError, e.message
         else
@@ -42,13 +42,13 @@ module ExecJS
       end
 
       def unbox(value)
-        case value = ::Rhino::To.ruby(value)
-        when ::Rhino::NativeFunction
+        case value = ::Rhino::to_ruby(value)
+        when Java::OrgMozillaJavascript::NativeFunction
           nil
-        when ::Rhino::NativeObject
+        when Java::OrgMozillaJavascript::NativeObject
           value.inject({}) do |vs, (k, v)|
             case v
-            when ::Rhino::NativeFunction, ::Rhino::J::Function
+            when Java::OrgMozillaJavascript::NativeFunction, ::Rhino::JS::Function
               nil
             else
               vs[k] = unbox(v)

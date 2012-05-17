@@ -2,14 +2,14 @@ module ExecJS
   class MustangRuntime
     class Context
       def initialize(source = "")
-        source = source.encode('UTF-8') if source.respond_to?(:encode)
+        source = ExecJS::encode(source) if source.respond_to?(:encode)
 
         @v8_context = ::Mustang::Context.new
         @v8_context.eval(source)
       end
 
       def exec(source, options = {})
-        source = source.encode('UTF-8') if source.respond_to?(:encode)
+        source = ExecJS::encode(source) if source.respond_to?(:encode)
 
         if /\S/ =~ source
           eval "(function(){#{source}})()", options
@@ -17,7 +17,7 @@ module ExecJS
       end
 
       def eval(source, options = {})
-        source = source.encode('UTF-8') if source.respond_to?(:encode)
+        source = ExecJS::encode(source) if source.respond_to?(:encode)
 
         if /\S/ =~ source
           unbox @v8_context.eval("(#{source})")

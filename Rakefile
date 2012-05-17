@@ -7,7 +7,7 @@ require "execjs/runtimes"
 
 tests = namespace :test do |tests|
   ExecJS::Runtimes.names.each do |name|
-    next if name == :Disabled
+    next if (name == :Disabled || name == "Disabled")
 
     task(name.downcase) do
       ENV["EXECJS_RUNTIME"] = name.to_s
@@ -56,4 +56,5 @@ task :test do
   banner messages.join("\n")
 
   raise "test failures" if failed.any?
+  raise "all tests skipped" if !passed.any?
 end

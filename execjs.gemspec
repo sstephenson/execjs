@@ -7,18 +7,12 @@ Gem::Specification.new do |s|
 
   s.homepage    = "https://github.com/sstephenson/execjs"
   s.summary     = "Run JavaScript code from Ruby"
-  s.description = <<-EOS
-    ExecJS lets you run JavaScript code from Ruby.
-  EOS
+  s.description = "ExecJS lets you run JavaScript code from Ruby."
 
   s.files = Dir["README.md", "LICENSE", "lib/**/*"]
 
   s.add_dependency "multi_json", "~>1.0"
-  s.add_development_dependency "johnson"
-  s.add_development_dependency "mustang"
   s.add_development_dependency "rake"
-  s.add_development_dependency "therubyracer"
-  s.add_development_dependency "therubyrhino"
 
   s.authors = ["Sam Stephenson", "Josh Peek"]
   s.email   = ["sstephenson@gmail.com", "josh@joshpeek.com"]
