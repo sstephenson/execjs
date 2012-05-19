@@ -20,7 +20,7 @@ module ExecJS
         source = ExecJS.encode(source)
 
         if /\S/ =~ source
-          unbox @v8_context.eval("(#{source})")
+          unbox @v8_context.eval(save_string_error source)
         end
       end
 
@@ -41,9 +41,11 @@ module ExecJS
         when Mustang::V8::Function
           nil
         when Mustang::V8::SyntaxError
-          raise RuntimeError, value.message
+          message, trace = process_error(value)
+          raise RuntimeError.new(message, trace)
         when Mustang::V8::Error
-          raise ProgramError, value.message
+          message, trace = process_error(value)
+          raise ProgramError.new(message, trace)
         when Mustang::V8::Object
           value.inject({}) { |h, (k, v)|
             v = unbox(v)
@@ -54,6 +56,29 @@ module ExecJS
           value.respond_to?(:delegate) ? value.delegate : value
         end
       end
+
+      # workaround for https://github.com/nu7hatch/mustang/issues/20
+      def save_string_error(source)
+        "
+        try {
+          (#{source})
+        } catch(e) {
+          if (typeof e == 'string') {
+            throw new Error(e);
+          } else {
+            throw e;
+          }
+        }"
+      end
+
+      protected
+        def process_error(error)
+          # error.line_no
+          # error.start_col
+          # error.script_name
+          # error.source_line
+          [error.message, nil]
+        end
     end
 
     def name

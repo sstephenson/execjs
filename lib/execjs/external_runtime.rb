@@ -4,6 +4,21 @@ require "tempfile"
 
 module ExecJS
   class ExternalRuntime
+    class << self
+      def extract_error(output, source)
+        match_data = /^.*\((\d+), (\d+)\).*Microsoft JScript( runtime error)?: (.*)$/.match(output)
+        if match_data
+          line, column, message, message = match_data.to_a[1,4]
+          line = line.to_i - 1
+          trace = [ExecJS.trace_line(source, line, column)]
+        else
+          message = output
+          trace = false
+        end
+        [message, trace]
+      end
+    end
+
     class Context
       def initialize(runtime, source = "")
         source = ExecJS.encode(source)
@@ -22,10 +37,10 @@ module ExecJS
 
       def exec(source, options = {})
         source = ExecJS.encode(source)
-        source = "#{@source}\n#{source}" if @source
+        source = "#{@source}\n#{source}" if /\S/ =~ @source
 
         compile_to_tempfile(source) do |file|
-          extract_result(@runtime.send(:exec_runtime, file.path))
+          extract_result(@runtime.send(:exec_runtime, file.path, source), source)
         end
       end
 
@@ -49,6 +64,9 @@ module ExecJS
               source
             end
             output.sub!('#{encoded_source}') do
+              encode_unicode_codepoints(source)
+            end
+            output.sub!('#{escaped_source}') do
               encoded_source = encode_unicode_codepoints(source)
               json_encode("(function(){ #{encoded_source} })()")
             end
@@ -58,14 +76,34 @@ module ExecJS
           end
         end
 
-        def extract_result(output)
-          status, value = output.empty? ? [] : json_decode(output)
+        def process_trace(trace, source)
+          if trace.respond_to?(:lines)
+            trace = trace.lines.to_a
+            trace = trace[1, trace.length - 8]
+            trace.map! do |i|
+              line, column = /^at .*:(\d+):(\d+)\)?$/.match(i.strip).to_a[1,2]
+              line = line.to_i - 1
+              ExecJS.trace_line(source, line, column)
+            end
+          end
+          trace
+        end
+
+        def extract_result(output, source)
+          begin
+            status, value, trace = output.empty? ? [] : json_decode(output)
+            trace = process_trace(trace, source) if status != "ok"
+          rescue
+            status = 'err'
+            value, trace = ExternalRuntime::extract_error(output, source)
+          end
+
           if status == "ok"
             value
           elsif value =~ /SyntaxError:/
-            raise RuntimeError, value
+            raise RuntimeError.new(value, trace)
           else
-            raise ProgramError, value
+            raise ProgramError.new(value, trace)
           end
         end
 
@@ -160,12 +198,13 @@ module ExecJS
         @runner_source ||= IO.read(@runner_path)
       end
 
-      def exec_runtime(filename)
+      def exec_runtime(filename, source)
         output = sh("#{shell_escape(*(binary.split(' ') << filename))} 2>&1")
         if $?.success?
           output
         else
-          raise RuntimeError, output
+          value, trace = ExternalRuntime.extract_error(output, source)
+          raise RuntimeError.new(value, trace)
         end
       end
 

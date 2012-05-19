@@ -2,7 +2,15 @@ require "execjs/version"
 require "rbconfig"
 
 module ExecJS
-  class Error           < ::StandardError; end
+  class Error < ::StandardError; 
+    attr_accessor :js_trace
+    
+    def initialize(msg, js_trace = false)
+      @js_trace = js_trace
+      super msg
+    end
+  end
+
   class RuntimeError              < Error; end
   class ProgramError              < Error; end
   class RuntimeUnavailable < RuntimeError; end
@@ -62,6 +70,18 @@ module ExecJS
       def encode(string)
         string
       end
+    end
+
+    def trace_line(source, line, column, name = '<eval>')
+      line = line.to_i
+      source = source.lines.to_a if source.respond_to?(:lines)
+      if line > 0 && source.length >= line
+        code = source[line - 1]
+      else
+        code = source[0]
+      end
+      code.strip! if code.respond_to?(:strip!)
+      "at #{code} (#{name}:#{line}:#{column})"
     end
   end
 end

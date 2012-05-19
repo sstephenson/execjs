@@ -150,9 +150,59 @@ class TestExecJS < Test::Unit::TestCase
     end
   end
 
+  def assert_raise_message(klass, message, &block)
+    block.call
+  rescue Exception => e
+    assert klass === e, "Expected #{klass.name}, but was #{e.class.name}"
+    assert_equal message, e.message
+  end
+
   def test_thrown_exception
-    assert_raise ExecJS::ProgramError do
-      ExecJS.exec("throw 'hello'")
+    # fails on jscript
+    assert_raise_message ExecJS::ProgramError, 'hello string' do
+      ExecJS.exec("throw 'hello string'")
     end
+
+    assert_raise_message ExecJS::ProgramError, 'hello error' do
+      ExecJS.exec("throw Error('hello error')")
+    end
+
+    # fails on jruby-head see https://github.com/cowboyd/therubyrhino/issues/19
+    # assert_raise_message ExecJS::ProgramError, 'Error: hello jruby (<eval>#1)' do
+    #   ExecJS.exec("throw 'Error: hello jruby (<eval>#1)'")
+    # end
+
+    assert_raise_message ExecJS::ProgramError, 'Error: hello jruby (<eval>#1)' do
+      ExecJS.exec("throw Error('Error: hello jruby (<eval>#1)')")
+    end
+
+    assert_raise_message ExecJS::ProgramError, 'hello johnson at node:1' do
+      ExecJS.exec("throw Error('hello johnson at node:1')")
+    end
+  end
+
+  def test_javascript_stack_trace
+    begin
+      ExecJS.exec("function foo() {bar();}\n'a';\nfunction bar(){throw new Error('test');}\n'b';\nfoo();")
+    rescue ExecJS::ProgramError => e
+      if e.js_trace == nil
+        assert true, "can't get trace information"
+      elsif e.js_trace == false
+        fail "js_trace not implemented"
+      else
+        code, line = /at (.*) \(.*:(\d+):(\d+)\)/.match(e.js_trace.first).to_a[1,2]
+        assert_equal "3", line
+        assert_match(/throw new Error\('test'\)/, code)
+        if e.js_trace.length > 1
+          code, line = /at (.*) \(.*:(\d+):\d+\)/.match(e.js_trace.last).to_a[1,2]
+          assert_equal "5", line
+          assert code =~ /foo/, "there is code"
+        end
+      end
+    else
+      fail "expected to rescue"
+    end
+    # test eval ?
+    # test call ?
   end
 end

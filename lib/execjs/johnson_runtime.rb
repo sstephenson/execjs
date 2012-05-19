@@ -2,6 +2,7 @@ module ExecJS
   class JohnsonRuntime
     class Context
       def initialize(source = "")
+        @source = source
         @runtime = Johnson::Runtime.new
         @runtime.evaluate(source)
       end
@@ -21,20 +22,22 @@ module ExecJS
           unbox @runtime.evaluate("(#{source})")
         end
       rescue Johnson::Error => e
+        message, trace = process_error(e, source)
         if syntax_error?(e)
-          raise RuntimeError, e.message
+          raise RuntimeError.new(message, trace)
         else
-          raise ProgramError, e.message
+          raise ProgramError.new(message, trace)
         end
       end
 
       def call(properties, *args)
         unbox @runtime.evaluate(properties).call(*args)
       rescue Johnson::Error => e
+        message, trace = process_error(e, @source)
         if syntax_error?(e)
-          raise RuntimeError, e.message
+          raise RuntimeError.new(message, trace)
         else
-          raise ProgramError, e.message
+          raise ProgramError.new(message, trace)
         end
       end
 
@@ -61,6 +64,12 @@ module ExecJS
       private
         def syntax_error?(error)
           error.message =~ /^syntax error at /
+        end
+
+        def process_error(error, source)
+          match = /^(.*) at .*:\d+$/.match(error.message).to_a[1]
+          message = match ? match : error.message
+          [message, nil]
         end
 
         def function?(value)

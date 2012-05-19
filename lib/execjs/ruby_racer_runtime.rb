@@ -3,6 +3,7 @@ module ExecJS
     class Context
       def initialize(source = "")
         source = source.encode('UTF-8') if source.respond_to?(:encode)
+        @source = source
 
         lock do
           @v8_context = ::V8::Context.new
@@ -18,6 +19,14 @@ module ExecJS
         end
       end
 
+      def prepare_trace(trace, source)
+        source = source.lines.to_a
+        trace.map! do |i|
+          line, column = /^at .*:(\d+):(\d+)\)?$/.match(i).to_a[1,2]
+          ExecJS.trace_line(source, line, column)
+        end
+      end
+
       def eval(source, options = {})
         source = source.encode('UTF-8') if source.respond_to?(:encode)
 
@@ -27,9 +36,9 @@ module ExecJS
               unbox @v8_context.eval("(#{source})")
             rescue ::V8::JSError => e
               if e.value["name"] == "SyntaxError"
-                raise RuntimeError, e.message
+                raise RuntimeError.new(e.message, prepare_trace(e.backtrace(:javascript), source))
               else
-                raise ProgramError, e.message
+                raise ProgramError.new(e.message, prepare_trace(e.backtrace(:javascript), source))
               end
             end
           end
@@ -42,9 +51,9 @@ module ExecJS
             unbox @v8_context.eval(properties).call(*args)
           rescue ::V8::JSError => e
             if e.value["name"] == "SyntaxError"
-              raise RuntimeError, e.message
+              raise RuntimeError.new(e.message, prepare_trace(e.backtrace(:javascript), @source))
             else
-              raise ProgramError, e.message
+              raise ProgramError.new(e.message, prepare_trace(e.backtrace(:javascript), @source))
             end
           end
         end
