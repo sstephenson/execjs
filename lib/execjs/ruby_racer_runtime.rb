@@ -31,7 +31,7 @@ module ExecJS
               if e.value["name"] == "SyntaxError"
                 raise RuntimeError, e.message
               else
-                raise ProgramError, e.message
+                raise ProgramError, e.value.to_s
               end
             end
           end
