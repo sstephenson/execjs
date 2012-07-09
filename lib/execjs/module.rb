@@ -9,6 +9,7 @@ module ExecJS
 
   class << self
     attr_reader :runtime
+    attr_accessor :json_options
 
     def runtime=(runtime)
       raise RuntimeUnavailable, "#{runtime.name} is unavailable on this system" unless runtime.available?
