@@ -74,16 +74,9 @@ module ExecJS
           end
         end
 
-        @@fix_memory_limit = nil
-
         def fix_memory_limit?
-          return @@fix_memory_limit unless @@fix_memory_limit.nil?
-          version = defined?(::Rhino::VERSION) && ::Rhino::VERSION
-          if version && Gem::Version.create(version) >= Gem::Version.create('2.0.2')
-            @@fix_memory_limit = false
-          else
-            @@fix_memory_limit = true
-          end
+          ! Rhino::Context.respond_to?(:default_optimization_level)
+          # added in 2.0.2 which auto-switches optimization level (to -1)
         end
     end
 
