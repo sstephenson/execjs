@@ -7,7 +7,7 @@ module ExecJS
         source = encode(source)
 
         @rhino_context = ::Rhino::Context.new
-        fix_memory_limit! @rhino_context
+        fix_memory_limit! @rhino_context if fix_memory_limit?
         @rhino_context.eval(source)
       end
 
@@ -71,6 +71,18 @@ module ExecJS
             context.optimization_level = -1
           else
             context.instance_eval { @native.setOptimizationLevel(-1) }
+          end
+        end
+
+        @@fix_memory_limit = nil
+
+        def fix_memory_limit?
+          return @@fix_memory_limit unless @@fix_memory_limit.nil?
+          version = defined?(::Rhino::VERSION) && ::Rhino::VERSION
+          if version && Gem::Version.create(version) >= Gem::Version.create('2.0.2')
+            @@fix_memory_limit = false
+          else
+            @@fix_memory_limit = true
           end
         end
     end
