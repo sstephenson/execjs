@@ -11,6 +11,7 @@ ExecJS supports these runtimes:
   embedded within Ruby
 * [therubyrhino](https://github.com/cowboyd/therubyrhino) - Mozilla
   Rhino embedded within JRuby
+* [Google V8](http://code.google.com/p/v8/)
 * [Node.js](http://nodejs.org/)
 * Apple JavaScriptCore - Included with Mac OS X
 * [Microsoft Windows Script Host](http://msdn.microsoft.com/en-us/library/9bbdkx3k.aspx) (JScript)
