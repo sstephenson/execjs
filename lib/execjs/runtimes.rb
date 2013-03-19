@@ -31,6 +31,13 @@ module ExecJS
       :runner_path => ExecJS.root + "/support/jsc_runner.js"
     )
 
+    V8 = ExternalRuntime.new(
+      :name        => "V8",
+      :command     => "d8",
+      :runner_path => ExecJS.root + "/support/d8_runner.js",
+      :encoding    => 'UTF-8'
+    )
+
     SpiderMonkey = Spidermonkey = ExternalRuntime.new(
       :name        => "SpiderMonkey",
       :command     => "js",
@@ -80,6 +87,7 @@ module ExecJS
         RubyRhino,
         Johnson,
         Mustang,
+        V8,
         Node,
         JavaScriptCore,
         SpiderMonkey,
