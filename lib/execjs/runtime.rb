@@ -30,14 +30,14 @@ module ExecJS
       self.class::Context
     end
 
-    def exec(source)
+    def exec(source, options = {})
       context = context_class.new(self)
-      context.exec(source)
+      context.exec(source, options)
     end
 
-    def eval(source)
+    def eval(source, options = {})
       context = context_class.new(self)
-      context.eval(source)
+      context.eval(source, options)
     end
 
     def compile(source)
@@ -53,3 +53,4 @@ module ExecJS
     end
   end
 end
+
