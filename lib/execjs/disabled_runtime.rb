@@ -6,11 +6,11 @@ module ExecJS
       "Disabled"
     end
 
-    def exec(source)
+    def exec(source, options = {})
       raise Error, "ExecJS disabled"
     end
 
-    def eval(source)
+    def eval(source, options = {})
       raise Error, "ExecJS disabled"
     end
 
@@ -27,3 +27,4 @@ module ExecJS
     end
   end
 end
+
