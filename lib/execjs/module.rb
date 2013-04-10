@@ -15,12 +15,12 @@ module ExecJS
       @runtime = runtime
     end
 
-    def exec(source)
-      runtime.exec(source)
+    def exec(source, options = {})
+      runtime.exec(source, options)
     end
 
-    def eval(source)
-      runtime.eval(source)
+    def eval(source, options = {})
+      runtime.eval(source, options)
     end
 
     def compile(source)
@@ -36,3 +36,4 @@ module ExecJS
     end
   end
 end
+
