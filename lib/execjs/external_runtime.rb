@@ -86,6 +86,8 @@ module ExecJS
         end
     end
 
+    @@supports_force_encoding = ''.respond_to?(:force_encoding)
+
     attr_reader :name
 
     def initialize(options)
@@ -129,14 +131,26 @@ module ExecJS
         end
       end
 
+      def popen(command, popen_options)
+        status = nil
+        if RUBY_VERSION < '1.9'
+          IO.popen(command) {|f| yield f}
+          status = $?
+        else
+          IO.popen(command, popen_options) {|f| yield f}
+          status = $?
+        end
+        status
+      end
+
     protected
       def runner_source
         @runner_source ||= IO.read(@runner_path)
       end
 
       def exec_runtime(file_name, options)
-        output = sh("#{shell_escape(*(binary.split(' ') << file_name))} 2>&1", options)
-        if $?.success?
+        status, output = sh("#{shell_escape(*(binary.split(' ') << file_name))} 2>&1", options)
+        if status.success?
           output
         else
           raise RuntimeError, output
@@ -165,27 +179,22 @@ module ExecJS
         end
       end
 
-      if "".respond_to?(:force_encoding)
-        def sh(command, options)
-          popen_options, output = {}, nil
-          options[:external_encoding] = @encoding if @encoding
-          options[:internal_encoding] = ::Encoding.default_internal || 'UTF-8'
-          IO.popen(command, popen_options) { |f| output = f.read }
-          output
-        end
-      else
-        require "iconv"
+      def sh(command, options)
+        status, output, popen_options = nil, nil, {}
 
-        def sh(command, options)
-          output = nil
-          IO.popen(command) { |f| output = f.read }
-
-          if @encoding
-            Iconv.new('UTF-8', @encoding).iconv(output)
-          else
-            output
-          end
+        if @@supports_force_encoding
+          popen_options[:external_encoding] = @encoding if @encoding
+          popen_options[:internal_encoding] = ::Encoding.default_internal || 'UTF-8'
         end
+
+        status = popen(command, popen_options) {|f| output = f.read}
+
+        if not @@supports_force_encoding
+          require 'iconv'
+          output = Iconv.new('UTF-8', @encoding).iconv(output) if @encoding
+        end
+
+        [status, output]
       end
 
       if ExecJS.windows?
@@ -203,3 +212,4 @@ module ExecJS
       end
   end
 end
+
