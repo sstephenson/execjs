@@ -16,7 +16,7 @@ module ExecJS
         source = encode(source)
 
         if /\S/ =~ source
-          exec("return eval(#{JSON.encode("(#{source})")})")
+          exec("return eval(#{JSON.encode("(#{source})")})", options)
         end
       end
 
@@ -25,7 +25,7 @@ module ExecJS
         source = "#{@source}\n#{source}" if @source
 
         compile_to_tempfile(source) do |file|
-          extract_result(@runtime.send(:exec_runtime, file.path))
+          extract_result(@runtime.send(:exec_runtime, file.path, options))
         end
       end
 
@@ -134,8 +134,8 @@ module ExecJS
         @runner_source ||= IO.read(@runner_path)
       end
 
-      def exec_runtime(filename)
-        output = sh("#{shell_escape(*(binary.split(' ') << filename))} 2>&1")
+      def exec_runtime(file_name, options)
+        output = sh("#{shell_escape(*(binary.split(' ') << file_name))} 2>&1", options)
         if $?.success?
           output
         else
@@ -166,17 +166,17 @@ module ExecJS
       end
 
       if "".respond_to?(:force_encoding)
-        def sh(command)
-          output, options = nil, {}
+        def sh(command, options)
+          popen_options, output = {}, nil
           options[:external_encoding] = @encoding if @encoding
           options[:internal_encoding] = ::Encoding.default_internal || 'UTF-8'
-          IO.popen(command, options) { |f| output = f.read }
+          IO.popen(command, popen_options) { |f| output = f.read }
           output
         end
       else
         require "iconv"
 
-        def sh(command)
+        def sh(command, options)
           output = nil
           IO.popen(command) { |f| output = f.read }
 
