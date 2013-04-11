@@ -25,7 +25,7 @@ module ExecJS
         source = "#{@source}\n#{source}" if @source
 
         compile_to_tempfile(source) do |file|
-          extract_result(@runtime.send(:exec_runtime, file.path, options))
+          extract_result(@runtime.send(:exec_runtime, options[:timeout], file.path))
         end
       end
 
@@ -131,16 +131,63 @@ module ExecJS
         end
       end
 
-      def popen(command, popen_options)
+      def build_command(file_name)
+        if RUBY_VERSION < '1.9'
+          "#{shell_escape(*(binary.split(' ') << file_name))} 2>&1"
+        else
+          binary.split(' ') << file_name << {:err => [:child, :out]}
+        end
+      end
+
+      def popen(timeout, command, options)
         status = nil
         if RUBY_VERSION < '1.9'
           IO.popen(command) {|f| yield f}
           status = $?
         else
-          IO.popen(command, popen_options) {|f| yield f}
-          status = $?
+          pid = nil
+          begin
+            with_timeout(timeout) do
+              IO.popen(command, options) do |f|
+                pid = f.pid
+                yield f
+              end
+              status = $?
+            end
+          rescue Timeout::Error
+            if !pid.nil?
+              Process.kill 'KILL', pid
+              Process.wait pid
+            end
+            raise
+          end
         end
         status
+      end
+
+      def with_timeout(timeout)
+        return yield if timeout.nil? or timeout.zero?
+
+        result, timed_out = nil, true
+
+        worker_thread = Thread.new do
+          result = yield
+          timed_out = false
+        end
+
+        timeout_thread = Thread.new do
+          sleep timeout
+          if worker_thread.alive?
+            worker_thread.kill
+            sleep 0
+            worker_thread.raise
+          end
+        end
+
+        worker_thread.join
+        timeout_thread.kill
+        raise Timeout::Error if timed_out
+        result
       end
 
     protected
@@ -148,8 +195,9 @@ module ExecJS
         @runner_source ||= IO.read(@runner_path)
       end
 
-      def exec_runtime(file_name, options)
-        status, output = sh("#{shell_escape(*(binary.split(' ') << file_name))} 2>&1", options)
+      def exec_runtime(timeout, file_name)
+        command = build_command(file_name)
+        status, output = sh(timeout, command)
         if status.success?
           output
         else
@@ -179,15 +227,17 @@ module ExecJS
         end
       end
 
-      def sh(command, options)
-        status, output, popen_options = nil, nil, {}
+      def sh(timeout, command)
+        status, output, options = nil, nil, {}
 
         if @@supports_force_encoding
-          popen_options[:external_encoding] = @encoding if @encoding
-          popen_options[:internal_encoding] = ::Encoding.default_internal || 'UTF-8'
+          options[:external_encoding] = @encoding if @encoding
+          options[:internal_encoding] = ::Encoding.default_internal || 'UTF-8'
         end
 
-        status = popen(command, popen_options) {|f| output = f.read}
+        status = popen(timeout, command, options) do |f|
+          output = f.read
+        end
 
         if not @@supports_force_encoding
           require 'iconv'
