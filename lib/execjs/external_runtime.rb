@@ -16,7 +16,7 @@ module ExecJS
         source = encode(source)
 
         if /\S/ =~ source
-          exec("return eval(#{::JSON.dump("(#{source})")})")
+          exec("return eval(#{::JSON.generate("(#{source})", :quirks_mode => true)})")
         end
       end
 
