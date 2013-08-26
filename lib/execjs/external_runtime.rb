@@ -16,7 +16,8 @@ module ExecJS
         source = encode(source)
 
         if /\S/ =~ source
-          exec("return eval(#{::JSON.dump("(#{source})")})")
+          source = "(#{source})".to_json
+          exec("return eval(#{source})")
         end
       end
 
