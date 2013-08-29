@@ -1,3 +1,4 @@
+require "json"
 require "shellwords"
 require "tempfile"
 require "execjs/runtime"
@@ -16,7 +17,7 @@ module ExecJS
         source = encode(source)
 
         if /\S/ =~ source
-          exec("return eval(#{::JSON.generate("(#{source})", :quirks_mode => true)})")
+          exec("return eval(#{json_encode("(#{source})")})")
         end
       end
 
@@ -30,7 +31,7 @@ module ExecJS
       end
 
       def call(identifier, *args)
-        eval "#{identifier}.apply(this, #{::JSON.dump(args)})"
+        eval "#{identifier}.apply(this, #{json_encode(args)})"
       end
 
       protected
@@ -50,7 +51,7 @@ module ExecJS
             end
             output.sub!('#{encoded_source}') do
               encoded_source = encode_unicode_codepoints(source)
-              ::JSON.dump("(function(){ #{encoded_source} })()")
+              json_encode("(function(){ #{encoded_source} })()")
             end
             output.sub!('#{json2_source}') do
               IO.read(ExecJS.root + "/support/json2.js")
@@ -83,6 +84,10 @@ module ExecJS
               "\\u%04x" % ch.unpack("U*")
             end
           end
+        end
+
+        def json_encode obj
+          ::JSON.generate(obj, :quirks_mode => true)
         end
     end
 
