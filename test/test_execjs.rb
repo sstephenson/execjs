@@ -166,4 +166,10 @@ class TestExecJS < Test::Unit::TestCase
     context = ExecJS.compile(source)
     assert_equal 64, context.call("CoffeeScript.eval", "((x) -> x * x)(8)")
   end
+
+  def test_json_encode
+    context = ExecJS::ExternalRuntime::Context.new("foo")
+    assert_equal '"foobar"', context.send(:json_encode, "foobar")
+    assert_equal '{"foo":"bar"}', context.send(:json_encode, { "foo" => "bar" })
+  end
 end
