@@ -7,4 +7,6 @@ rvm:
 matrix:
   include:
     - rvm: 1.9.3
-    - before_install: gem update --system 1.8.27
+      before_install: gem update --system 1.8.27
+    - rvm: 1.9.3
+      gemfile: Gemfile.json-1.5.5
