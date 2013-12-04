@@ -25,7 +25,12 @@ module ExecJS
         source = "#{@source}\n#{source}" if @source
 
         compile_to_tempfile(source) do |file|
-          extract_result(@runtime.send(:exec_runtime, file.path))
+          if ExecJS.cygwin?
+            filepath = `cygpath -m #{file.path}`.rstrip
+          else
+            filepath = file.path
+          end
+          extract_result(@runtime.send(:exec_runtime, filepath))
         end
       end
 
