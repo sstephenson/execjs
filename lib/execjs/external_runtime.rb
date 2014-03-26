@@ -40,7 +40,9 @@ module ExecJS
           tempfile.close
           yield tempfile
         ensure
-          tempfile.close!
+          if tempfile
+            tempfile.close!
+          end
         end
 
         def compile(source)
