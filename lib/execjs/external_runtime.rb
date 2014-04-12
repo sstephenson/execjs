@@ -135,6 +135,17 @@ module ExecJS
       end
 
       def exec_runtime(filename)
+
+        if @name == "JScript"
+          uname = nil
+          IO.popen("uname -s") { |f| uname = f.read }
+
+          if uname.include? "CYGWIN"
+            # If we are running under CYGWIN and using JSCRIPT, we need to prefix the path with the CYGWIN path - otherwise it does not correctly execute the JS code
+            filename = "/cygwin/" + filename
+          end
+        end
+
         output = sh("#{shell_escape(*(binary.split(' ') << filename))} 2>&1")
         if $?.success?
           output
