@@ -1,6 +1,7 @@
 require "execjs/module"
 require "execjs/disabled_runtime"
 require "execjs/external_runtime"
+require "execjs/persistent_external_runtime"
 require "execjs/johnson_runtime"
 require "execjs/mustang_runtime"
 require "execjs/ruby_racer_runtime"
@@ -22,6 +23,13 @@ module ExecJS
       :name        => "Node.js (V8)",
       :command     => ["nodejs", "node"],
       :runner_path => ExecJS.root + "/support/node_runner.js",
+      :encoding    => 'UTF-8'
+    )
+
+    PersistentNode = PersistentExternalRuntime.new(
+      :name        => "Persistent Node.js (V8)",
+      :command     => ["nodejs", "node"],
+      :runner_path => ExecJS.root + "/support/persistent_node_runner.js",
       :encoding    => 'UTF-8'
     )
 
@@ -80,6 +88,7 @@ module ExecJS
         RubyRhino,
         Johnson,
         Mustang,
+        PersistentNode,
         Node,
         JavaScriptCore,
         SpiderMonkey,

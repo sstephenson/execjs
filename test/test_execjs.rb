@@ -68,15 +68,15 @@ class TestExecJS < Test::Unit::TestCase
     assert_nil ExecJS.eval("")
     assert_nil ExecJS.eval(" ")
     assert_nil ExecJS.eval("null")
-    assert_nil ExecJS.eval("function() {}")
+    assert_nil ExecJS.eval("function x() {}")
     assert_equal 0, ExecJS.eval("0")
     assert_equal true, ExecJS.eval("true")
     assert_equal [1, 2], ExecJS.eval("[1, 2]")
     assert_equal [1, nil], ExecJS.eval("[1, function() {}]")
     assert_equal "hello", ExecJS.eval("'hello'")
     assert_equal ["red", "yellow", "blue"], ExecJS.eval("'red yellow blue'.split(' ')")
-    assert_equal({"a"=>1,"b"=>2}, ExecJS.eval("{a:1,b:2}"))
-    assert_equal({"a"=>true}, ExecJS.eval("{a:true,b:function (){}}"))
+    assert_equal({"a"=>1,"b"=>2}, ExecJS.eval("x = {a:1,b:2}"))
+    assert_equal({"a"=>true}, ExecJS.eval("x = {a:true,b:function (){}}"))
     assert_equal "café", ExecJS.eval("'café'")
     assert_equal "☃", ExecJS.eval('"☃"')
     assert_equal "☃", ExecJS.eval('"\u2603"')
@@ -162,8 +162,9 @@ class TestExecJS < Test::Unit::TestCase
 
   def test_coffeescript
     require "open-uri"
-    assert source = open("http://jashkenas.github.com/coffee-script/extras/coffee-script.js").read
+    assert source = open("http://cdnjs.cloudflare.com/ajax/libs/coffee-script/1.7.1/coffee-script.min.js").read
     context = ExecJS.compile(source)
     assert_equal 64, context.call("CoffeeScript.eval", "((x) -> x * x)(8)")
+    assert_equal 64, context.eval("CoffeeScript.eval('((x) -> x * x)(8)')")
   end
 end
