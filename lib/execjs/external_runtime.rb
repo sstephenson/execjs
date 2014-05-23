@@ -142,7 +142,9 @@ module ExecJS
 
           if uname.include? "CYGWIN"
             # If we are running under CYGWIN and using JSCRIPT, we need to prefix the path with the CYGWIN path - otherwise it does not correctly execute the JS code
-            filename = "/cygwin/" + filename
+            cygroot = nil
+            IO.popen("cygpath -w /") { |f| cygroot = f.read }
+            filename = cygroot.split(':')[1].strip + filename
           end
         end
 
