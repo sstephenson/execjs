@@ -27,13 +27,7 @@ module ExecJS
 
     JavaScriptCore = ExternalRuntime.new(
       name:        "JavaScriptCore",
-      command:     "/System/Library/Frameworks/JavaScriptCore.framework/Versions/A/Resources/jsc",
-      runner_path: ExecJS.root + "/support/jsc_runner.js"
-    )
-
-    WebKitJavaScriptCore = ExternalRuntime.new(
-      name:        "WebKit JavaScriptCore",
-      command:     "jsc-1",
+      command:     ["/System/Library/Frameworks/JavaScriptCore.framework/Versions/A/Resources/jsc", "jsc-1"],
       runner_path: ExecJS.root + "/support/jsc_runner.js"
     )
 
