@@ -5,6 +5,7 @@ require "execjs/johnson_runtime"
 require "execjs/mustang_runtime"
 require "execjs/ruby_racer_runtime"
 require "execjs/ruby_rhino_runtime"
+require "execjs/nashorn_runtime"
 
 module ExecJS
   module Runtimes
@@ -13,6 +14,8 @@ module ExecJS
     RubyRacer = RubyRacerRuntime.new
 
     RubyRhino = RubyRhinoRuntime.new
+
+    Nashorn = NashornRuntime.new
 
     Johnson = JohnsonRuntime.new
 
@@ -78,6 +81,7 @@ module ExecJS
       @runtimes ||= [
         RubyRacer,
         RubyRhino,
+        Nashorn,
         Johnson,
         Mustang,
         Node,
