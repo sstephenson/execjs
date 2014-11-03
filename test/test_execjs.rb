@@ -158,6 +158,17 @@ class TestExecJS < Test
     end
   end
 
+  def test_syntax_error_with_line_numbers
+    return unless %w(RubyRacer Node).include? ENV["EXECJS_RUNTIME"]
+    err = nil
+    begin
+      ExecJS.exec("\n\n)")
+    rescue => e
+      err = e
+    end
+    assert /\b3\b/.match(err.to_s)
+  end
+
   def test_thrown_exception
     assert_raises ExecJS::ProgramError do
       ExecJS.exec("throw 'hello'")

@@ -28,11 +28,7 @@ module ExecJS
             begin
               unbox @v8_context.eval("(#{source})")
             rescue ::V8::JSError => e
-              if e.value["name"] == "SyntaxError"
-                raise RuntimeError, e.value.to_s
-              else
-                raise ProgramError, e.value.to_s
-              end
+              raise wrap_error(e)
             end
           end
         end
@@ -43,11 +39,7 @@ module ExecJS
           begin
             unbox @v8_context.eval(properties).call(*args)
           rescue ::V8::JSError => e
-            if e.value["name"] == "SyntaxError"
-              raise RuntimeError, e.value.to_s
-            else
-              raise ProgramError, e.value.to_s
-            end
+            raise wrap_error(e)
           end
         end
       end
@@ -85,6 +77,15 @@ module ExecJS
             raise exception
           else
             result
+          end
+        end
+
+        def wrap_error(e)
+          msg = "#{e.value['name']}: #{e}" # only V8::Error#to_s includes the line number
+          if e.value['name'] == "SyntaxError"
+            RuntimeError.new(msg)
+          else
+            ProgramError.new(msg)
           end
         end
     end
