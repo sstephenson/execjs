@@ -1,5 +1,4 @@
-require "shellwords"
-require "tempfile"
+require "tmpdir"
 require "execjs/runtime"
 
 module ExecJS
@@ -10,22 +9,29 @@ module ExecJS
 
         @runtime = runtime
         @source  = source
+
+        # Test compile context source
+        exec("")
       end
 
       def eval(source, options = {})
         source = encode(source)
 
         if /\S/ =~ source
-          exec("return eval(#{::JSON.generate("(#{source})", :quirks_mode => true)})")
+          exec("return eval(#{::JSON.generate("(#{source})", quirks_mode: true)})")
         end
       end
 
       def exec(source, options = {})
         source = encode(source)
         source = "#{@source}\n#{source}" if @source
+        source = @runtime.compile_source(source)
 
-        compile_to_tempfile(source) do |file|
-          extract_result(@runtime.send(:exec_runtime, file.path))
+        tmpfile = write_to_tempfile(source)
+        begin
+          extract_result(@runtime.exec_runtime(tmpfile.path))
+        ensure
+          File.unlink(tmpfile)
         end
       end
 
@@ -34,54 +40,31 @@ module ExecJS
       end
 
       protected
-        def compile_to_tempfile(source)
-          tempfile = Tempfile.open(['execjs', '.js'])
-          tempfile.write compile(source)
-          tempfile.close
-          yield tempfile
-        ensure
-          tempfile.close!
+        # See Tempfile.create on Ruby 2.1
+        def create_tempfile(basename)
+          tmpfile = nil
+          Dir::Tmpname.create(basename) do |tmpname|
+            mode    = File::WRONLY | File::CREAT | File::EXCL
+            tmpfile = File.open(tmpname, mode, 0600)
+          end
+          tmpfile
         end
 
-        def compile(source)
-          @runtime.send(:runner_source).dup.tap do |output|
-            output.sub!('#{source}') do
-              source
-            end
-            output.sub!('#{encoded_source}') do
-              encoded_source = encode_unicode_codepoints(source)
-              ::JSON.generate("(function(){ #{encoded_source} })()", :quirks_mode => true)
-            end
-            output.sub!('#{json2_source}') do
-              IO.read(ExecJS.root + "/support/json2.js")
-            end
-          end
+        def write_to_tempfile(contents)
+          tmpfile = create_tempfile(['execjs', 'js'])
+          tmpfile.write(contents)
+          tmpfile.close
+          tmpfile
         end
 
         def extract_result(output)
-          status, value = output.empty? ? [] : ::JSON.parse(output, :create_additions => false)
+          status, value = output.empty? ? [] : ::JSON.parse(output, create_additions: false)
           if status == "ok"
             value
           elsif value =~ /SyntaxError:/
             raise RuntimeError, value
           else
             raise ProgramError, value
-          end
-        end
-
-        if "".respond_to?(:codepoints)
-          def encode_unicode_codepoints(str)
-            str.gsub(/[\u0080-\uffff]/) do |ch|
-              "\\u%04x" % ch.codepoints.to_a
-            end
-          end
-        else
-          def encode_unicode_codepoints(str)
-            str.gsub(/([\xC0-\xDF][\x80-\xBF]|
-                       [\xE0-\xEF][\x80-\xBF]{2}|
-                       [\xF0-\xF7][\x80-\xBF]{3})+/nx) do |ch|
-              "\\u%04x" % ch.unpack("U*")
-            end
           end
         end
     end
@@ -92,11 +75,17 @@ module ExecJS
       @name        = options[:name]
       @command     = options[:command]
       @runner_path = options[:runner_path]
-      @test_args   = options[:test_args]
-      @test_match  = options[:test_match]
       @encoding    = options[:encoding]
       @deprecated  = !!options[:deprecated]
       @binary      = nil
+
+      @popen_options = {}
+      @popen_options[:external_encoding] = @encoding if @encoding
+      @popen_options[:internal_encoding] = ::Encoding.default_internal || 'UTF-8'
+
+      if @runner_path
+        instance_eval generate_compile_method(@runner_path)
+      end
     end
 
     def available?
@@ -110,7 +99,7 @@ module ExecJS
 
     private
       def binary
-        @binary ||= locate_binary
+        @binary ||= which(@command)
       end
 
       def locate_executable(cmd)
@@ -130,42 +119,80 @@ module ExecJS
       end
 
     protected
-      def runner_source
-        @runner_source ||= IO.read(@runner_path)
+      def generate_compile_method(path)
+        <<-RUBY
+        def compile_source(source)
+          <<-RUNNER
+          #{IO.read(path)}
+          RUNNER
+        end
+        RUBY
       end
 
-      def exec_runtime(filename)
+      def json2_source
+        @json2_source ||= IO.read(ExecJS.root + "/support/json2.js")
+      end
 
-        if @name == "JScript"
-          uname = nil
-          IO.popen("uname -s") { |f| uname = f.read }
+      def encode_source(source)
+        encoded_source = encode_unicode_codepoints(source)
+        ::JSON.generate("(function(){ #{encoded_source} })()", quirks_mode: true)
+      end
 
-          if uname.include? "CYGWIN"
-            # If we are running under CYGWIN and using JSCRIPT, we need to prefix the path with the CYGWIN path - otherwise it does not correctly execute the JS code
-            cygroot = nil
-            IO.popen("cygpath -w /") { |f| cygroot = f.read }
-            filename = cygroot.split(':')[1].strip + filename
+      def encode_unicode_codepoints(str)
+        str.gsub(/[\u0080-\uffff]/) do |ch|
+          "\\u%04x" % ch.codepoints.to_a
+        end
+      end
+
+      if ExecJS.windows?
+        def exec_runtime(filename)
+          if @name == "JScript"
+            if RbConfig::CONFIG["host_os"].include? "cygwin"
+              # If we are running under CYGWIN and using JSCRIPT, we need to prefix the path with the CYGWIN path - otherwise it does not correctly execute the JS code
+              cygroot = nil
+              IO.popen("cygpath -w /") { |f| cygroot = f.read }
+              filename = '"' + cygroot.split(':')[1].strip + filename + '"'
+            end
           end
-        end
 
-        output = sh("#{shell_escape(*(binary.split(' ') << filename))} 2>&1")
-        if $?.success?
-          output
-        else
-          raise RuntimeError, output
-        end
-      end
+          path = Dir::Tmpname.create(['execjs', 'json']) {}
+          begin
+            command = binary.split(" ") << filename
+            `#{shell_escape(*command)} 2>&1 > #{path}`
+            output = File.open(path, 'rb', @popen_options) { |f| f.read }
+          ensure
+            File.unlink(path) if path
+          end
 
-      def locate_binary
-        if binary = which(@command)
-          if @test_args
-            output = `#{shell_escape(binary, @test_args)} 2>&1`
-            binary if output.match(@test_match)
+          if $?.success?
+            output
           else
-            binary
+            raise RuntimeError, output
+          end
+        end
+
+        def shell_escape(*args)
+          # see http://technet.microsoft.com/en-us/library/cc723564.aspx#XSLTsection123121120120
+          args.map { |arg|
+            arg = %Q("#{arg.gsub('"','""')}") if arg.match(/[&|()<>^ "]/)
+            arg
+          }.join(" ")
+        end
+      else
+        def exec_runtime(filename)
+          io = IO.popen(binary.split(' ') << filename, @popen_options.merge({err: [:child, :out]}))
+          output = io.read
+          io.close
+
+          if $?.success?
+            output
+          else
+            raise RuntimeError, output
           end
         end
       end
+      # Internally exposed for Context.
+      public :exec_runtime
 
       def which(command)
         Array(command).find do |name|
@@ -175,43 +202,6 @@ module ExecJS
           next unless path
 
           args ? "#{path} #{args}" : path
-        end
-      end
-
-      if "".respond_to?(:force_encoding)
-        def sh(command)
-          output, options = nil, {}
-          options[:external_encoding] = @encoding if @encoding
-          options[:internal_encoding] = ::Encoding.default_internal || 'UTF-8'
-          IO.popen(command, options) { |f| output = f.read }
-          output
-        end
-      else
-        require "iconv"
-
-        def sh(command)
-          output = nil
-          IO.popen(command) { |f| output = f.read }
-
-          if @encoding
-            Iconv.new('UTF-8', @encoding).iconv(output)
-          else
-            output
-          end
-        end
-      end
-
-      if ExecJS.windows?
-        def shell_escape(*args)
-          # see http://technet.microsoft.com/en-us/library/cc723564.aspx#XSLTsection123121120120
-          args.map { |arg|
-            arg = %Q("#{arg.gsub('"','""')}") if arg.match(/[&|()<>^ "]/)
-            arg
-          }.join(" ")
-        end
-      else
-        def shell_escape(*args)
-          Shellwords.join(args)
         end
       end
   end

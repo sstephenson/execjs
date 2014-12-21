@@ -47,9 +47,7 @@ module ExecJS
         when function?(value)
           nil
         when string?(value)
-          value.respond_to?(:force_encoding) ?
-            value.force_encoding('UTF-8') :
-            value
+          value.force_encoding('UTF-8')
         when array?(value)
           value.map { |v| unbox(v) }
         when object?(value)
