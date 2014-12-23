@@ -52,6 +52,18 @@ in. If you want to access the Node API, you should check another library like
 [commonjs.rb](https://github.com/cowboyd/commonjs.rb) designed to provide a
 consistent interface.
 
+**Why can't I use `setTimeout`?**
+
+For similar reasons as modules, not all runtimes guarantee a full JavaScript
+event loop. So `setTimeout`, `setInterval` and other timers are not defined.
+
+**Can I ExecJS be used to sandbox scripts?**
+
+No, ExecJS shouldn't be used for any security related sandboxing. Since runtimes
+are automatically detected, each runtime has different sandboxing properties.
+You shouldn't use `ExecJS.eval` on any inputs you wouldn't feel comfortable Ruby
+`eval()`ing.
+
 
 # License
 

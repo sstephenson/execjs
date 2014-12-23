@@ -230,6 +230,15 @@ class TestExecJS < Test
     assert ExecJS.eval("typeof console == 'undefined'")
   end
 
+  def test_timers_are_undefined
+    assert ExecJS.eval("typeof setTimeout == 'undefined'")
+    assert ExecJS.eval("typeof setInterval == 'undefined'")
+    assert ExecJS.eval("typeof clearTimeout == 'undefined'")
+    assert ExecJS.eval("typeof clearInterval == 'undefined'")
+    assert ExecJS.eval("typeof setImmediate == 'undefined'")
+    assert ExecJS.eval("typeof clearImmediate == 'undefined'")
+  end
+
   def test_compile_large_scripts
     body = "var foo = 'bar';\n" * 100_000
     assert ExecJS.exec("function foo() {\n#{body}\n};\nreturn true")

@@ -86,8 +86,8 @@ module ExecJS
         RubyRhino,
         Johnson,
         Mustang,
-        Node,
         JavaScriptCore,
+        Node,
         OSAScript,
         SpiderMonkey,
         JScript
