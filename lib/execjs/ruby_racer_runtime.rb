@@ -55,7 +55,15 @@ module ExecJS
             if e.value["name"] == "SyntaxError"
               raise RuntimeError, e.value.to_s
             else
-              raise ProgramError, e.value.to_s
+              # If there are alot of files there may be issues with over run / memory management 
+              # lets retry after a 20 second sleep to allow the system to catch up
+              # and retry one more time
+              begin
+                sleep(20)
+                unbox @v8_context.eval(properties).call(*args)
+              rescue ::V8::JSError => e
+                raise ProgramError, e.value.to_s
+              end
             end
           end
         end
