@@ -1,4 +1,4 @@
-require "tmpdir"
+require "tempfile"
 require "execjs/runtime"
 
 module ExecJS
@@ -31,7 +31,7 @@ module ExecJS
         begin
           extract_result(@runtime.exec_runtime(tmpfile.path))
         ensure
-          File.unlink(tmpfile)
+          tmpfile.unlink
         end
       end
 
@@ -40,18 +40,8 @@ module ExecJS
       end
 
       protected
-        # See Tempfile.create on Ruby 2.1
-        def create_tempfile(basename)
-          tmpfile = nil
-          Dir::Tmpname.create(basename) do |tmpname|
-            mode    = File::WRONLY | File::CREAT | File::EXCL
-            tmpfile = File.open(tmpname, mode, 0600)
-          end
-          tmpfile
-        end
-
         def write_to_tempfile(contents)
-          tmpfile = create_tempfile(['execjs', 'js'])
+          tmpfile = Tempfile.new(['execjs', 'js'])
           tmpfile.write(contents)
           tmpfile.close
           tmpfile
@@ -146,13 +136,14 @@ module ExecJS
 
       if ExecJS.windows?
         def exec_runtime(filename)
-          path = Dir::Tmpname.create(['execjs', 'json']) {}
+          tmpfile = TempFile.new(['execjs', 'json'])
+          path = tmpfile.path
           begin
             command = binary.split(" ") << filename
             `#{shell_escape(*command)} 2>&1 > #{path}`
             output = File.open(path, 'rb', @popen_options) { |f| f.read }
           ensure
-            File.unlink(path) if path
+            tmpfile.unlink
           end
 
           if $?.success?
