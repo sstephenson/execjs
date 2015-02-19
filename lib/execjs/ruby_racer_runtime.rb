@@ -65,6 +65,16 @@ module ExecJS
                 raise ProgramError, e.value.to_s
               end
             end
+          rescue Exception => e
+            # If there are alot of files there may be issues with over run / memory management 
+            # lets retry after a 20 second sleep to allow the system to catch up
+            # and retry one more time
+            begin
+              sleep(20)
+              unbox @v8_context.eval(properties).call(*args)
+            rescue Exception => e
+              raise e
+            end            
           end
         end
       end
