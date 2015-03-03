@@ -28,8 +28,15 @@ module ExecJS
         source = @runtime.compile_source(source)
 
         tmpfile = write_to_tempfile(source)
+        
+        if ExecJS.cygwin?
+          filepath = `cygpath -m #{tmpfile.path}`.rstrip
+        else
+          filepath = tmpfile.path
+        end
+        
         begin
-          extract_result(@runtime.exec_runtime(tmpfile.path))
+          extract_result(@runtime.exec_runtime(filepath))
         ensure
           File.unlink(tmpfile)
         end
