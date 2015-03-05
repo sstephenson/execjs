@@ -13,9 +13,9 @@ module ExecJS
             @v8_context.eval(source)
           rescue ::V8::JSError => e
             if e.value["name"] == "SyntaxError"
-              raise RuntimeError, e.value.to_s
+              raise RuntimeError.new(e.value.to_s, e.backtrace)
             else
-              raise ProgramError, e.value.to_s
+              raise ProgramError.new(e.value.to_s, e.backtrace)
             end
           end
         end
@@ -38,9 +38,9 @@ module ExecJS
               unbox @v8_context.eval("(#{source})")
             rescue ::V8::JSError => e
               if e.value["name"] == "SyntaxError"
-                raise RuntimeError, e.value.to_s
+                raise RuntimeError.new(e.value.to_s, e.backtrace)
               else
-                raise ProgramError, e.value.to_s
+                raise ProgramError.new(e.value.to_s, e.backtrace)
               end
             end
           end
@@ -53,9 +53,9 @@ module ExecJS
             unbox @v8_context.eval(properties).call(*args)
           rescue ::V8::JSError => e
             if e.value["name"] == "SyntaxError"
-              raise RuntimeError, e.value.to_s
+              raise RuntimeError.new(e.value.to_s, e.backtrace)
             else
-              raise ProgramError, e.value.to_s
+              raise ProgramError.new(e.value.to_s, e.backtrace)
             end
           end
         end

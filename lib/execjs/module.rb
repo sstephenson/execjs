@@ -2,7 +2,15 @@ require "execjs/version"
 require "rbconfig"
 
 module ExecJS
-  class Error           < ::StandardError; end
+  class Error < ::StandardError
+    attr_reader :backtrace
+
+    def initialize(message, backtrace = nil)
+      super(message)
+      @backtrace = backtrace
+    end
+  end
+
   class RuntimeError              < Error; end
   class ProgramError              < Error; end
   class RuntimeUnavailable < RuntimeError; end
