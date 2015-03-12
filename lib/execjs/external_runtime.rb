@@ -157,6 +157,15 @@ module ExecJS
 
       if ExecJS.windows?
         def exec_runtime(filename)
+          if @name == "JScript"
+            if RbConfig::CONFIG["host_os"].include? "cygwin"
+              # If we are running under CYGWIN and using JSCRIPT, we need to prefix the path with the CYGWIN path - otherwise it does not correctly execute the JS code
+              cygroot = nil
+              IO.popen("cygpath -w /") { |f| cygroot = f.read }
+              filename = '"' + cygroot.split(':')[1].strip + filename + '"'
+            end
+          end
+
           path = Dir::Tmpname.create(['execjs', 'json']) {}
           begin
             command = binary.split(" ") << filename

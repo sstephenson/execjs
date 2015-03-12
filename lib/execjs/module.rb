@@ -32,7 +32,7 @@ module ExecJS
     end
 
     def windows?
-      @windows ||= RbConfig::CONFIG["host_os"] =~ /mswin|mingw/
+      @windows ||= RbConfig::CONFIG["host_os"] =~ /mswin|mingw|cygwin/
     end
   end
 end
