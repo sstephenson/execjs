@@ -52,13 +52,14 @@ module ExecJS
 
     def self.from_environment
       if name = ENV["EXECJS_RUNTIME"]
-        if runtime = const_get(name)
+        begin
+          runtime = const_get(name)
           if runtime.available?
-            runtime if runtime.available?
+            runtime
           else
             raise RuntimeUnavailable, "#{runtime.name} runtime is not available on this system"
           end
-        elsif !name.empty?
+        rescue
           raise RuntimeUnavailable, "#{name} runtime is not defined"
         end
       end
