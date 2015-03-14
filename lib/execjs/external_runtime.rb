@@ -113,20 +113,25 @@ module ExecJS
         @binary ||= which(@command)
       end
 
-      def locate_executable(cmd)
-        if ExecJS.windows? && File.extname(cmd) == ""
-          cmd << ".exe"
+      def locate_executable(command)
+        commands = Array(command)
+        if ExecJS.windows? && File.extname(command) == ""
+          ENV['PATHEXT'].split(File::PATH_SEPARATOR).each { |p|
+            commands << (command + p)
+          }
         end
 
-        if File.executable? cmd
-          cmd
-        else
-          path = ENV['PATH'].split(File::PATH_SEPARATOR).find { |p|
-            full_path = File.join(p, cmd)
-            File.executable?(full_path) && File.file?(full_path)
-          }
-          path && File.expand_path(cmd, path)
-        end
+        commands.find { |cmd|
+          if File.executable? cmd
+            cmd
+          else
+            path = ENV['PATH'].split(File::PATH_SEPARATOR).find { |p|
+              full_path = File.join(p, cmd)
+              File.executable?(full_path) && File.file?(full_path)
+            }
+            path && File.expand_path(cmd, path)
+          end
+        }
       end
 
     protected
