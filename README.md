@@ -11,9 +11,11 @@ ExecJS supports these runtimes:
   embedded within Ruby
 * [therubyrhino](https://github.com/cowboyd/therubyrhino) - Mozilla
   Rhino embedded within JRuby
+* [Duktape.rb](https://github.com/judofyr/duktape.rb) - Duktape JavaScript interpreter
 * [Node.js](http://nodejs.org/)
 * Apple JavaScriptCore - Included with Mac OS X
 * [Microsoft Windows Script Host](http://msdn.microsoft.com/en-us/library/9bbdkx3k.aspx) (JScript)
+* [Google V8](http://code.google.com/p/v8/)
 
 A short example:
 
@@ -40,7 +42,6 @@ context.call("CoffeeScript.compile", "square = (x) -> x * x", bare: true)
 ```
 $ gem install execjs
 ```
-
 
 # FAQ
 
@@ -71,9 +72,12 @@ are automatically detected, each runtime has different sandboxing properties.
 You shouldn't use `ExecJS.eval` on any inputs you wouldn't feel comfortable Ruby
 `eval()`ing.
 
+## Contributing to ExecJS
 
-# License
+ExecJS is work of hundreds of contributors. You're encouraged to submit pull requests, propose
+features and discuss issues.
 
-Copyright (c) 2015 Sam Stephenson and Josh Peek.
+See [CONTRIBUTING](CONTRIBUTING.md).
 
-Released under the MIT license. See `LICENSE` for details.
+## License
+ExecJS is released under the [MIT License](MIT-LICENSE).

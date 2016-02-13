@@ -28,8 +28,15 @@ module ExecJS
         source = @runtime.compile_source(source)
 
         tmpfile = write_to_tempfile(source)
+
+        if ExecJS.cygwin?
+          filepath = `cygpath -m #{tmpfile.path}`.rstrip
+        else
+          filepath = tmpfile.path
+        end
+
         begin
-          extract_result(@runtime.exec_runtime(tmpfile.path), tmpfile.path)
+          extract_result(@runtime.exec_runtime(filepath), filepath)
         ensure
           File.unlink(tmpfile)
         end
@@ -113,20 +120,25 @@ module ExecJS
         @binary ||= which(@command)
       end
 
-      def locate_executable(cmd)
-        if ExecJS.windows? && File.extname(cmd) == ""
-          cmd << ".exe"
+      def locate_executable(command)
+        commands = Array(command)
+        if ExecJS.windows? && File.extname(command) == ""
+          ENV['PATHEXT'].split(File::PATH_SEPARATOR).each { |p|
+            commands << (command + p)
+          }
         end
 
-        if File.executable? cmd
-          cmd
-        else
-          path = ENV['PATH'].split(File::PATH_SEPARATOR).find { |p|
-            full_path = File.join(p, cmd)
-            File.executable?(full_path) && File.file?(full_path)
-          }
-          path && File.expand_path(cmd, path)
-        end
+        commands.find { |cmd|
+          if File.executable? cmd
+            cmd
+          else
+            path = ENV['PATH'].split(File::PATH_SEPARATOR).find { |p|
+              full_path = File.join(p, cmd)
+              File.executable?(full_path) && File.file?(full_path)
+            }
+            path && File.expand_path(cmd, path)
+          end
+        }
       end
 
     protected

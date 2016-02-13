@@ -9,7 +9,7 @@ version "2.x.x" bump is in order.
 ### Make a release commit
 
 To prepare the release commit, edit the
-[lib/execjs/version.rb](https://github.com/sstephenson/execjs/blob/master/lib/execjs/version.rb)
+[lib/execjs/version.rb](https://github.com/rails/execjs/blob/master/lib/execjs/version.rb)
 `VERSION` value. Then make a single commit with the description as
 "ExecJS 2.x.x". Finally, tag the commit with `v2.x.x`.
 
@@ -18,7 +18,5 @@ $ git pull
 $ vim ./lib/execjs/version.rb
 $ git add ./lib/execjs/version.rb
 $ git ci -m "ExecJS 2.x.x"
-$ git tag v2.x.x
-$ git push
-$ git push --tags
+$ rake release
 ```

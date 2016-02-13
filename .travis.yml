@@ -1,7 +1,54 @@
-sudo: false
 language: ruby
-rvm:
-  - 2.0.0
-  - 2.1
-  - 2.2
-  - jruby-19mode
+cache: bundler
+sudo: false
+
+before_install:
+  - if [ "$EXECJS_RUNTIME" == "V8" ]; then brew update; fi
+  - if [ "$EXECJS_RUNTIME" == "V8" ]; then brew install v8; fi
+script: bundle exec ruby test/test_execjs.rb
+
+matrix:
+  include:
+    - rvm: 2.0.0
+      env: EXECJS_RUNTIME=Node
+    - rvm: 2.0.0
+      env: EXECJS_RUNTIME=Duktape
+    - rvm: 2.0.0
+      env: EXECJS_RUNTIME=RubyRacer
+
+    - rvm: 2.1
+      env: EXECJS_RUNTIME=Node
+    - rvm: 2.1
+      env: EXECJS_RUNTIME=Duktape
+    - rvm: 2.1
+      env: EXECJS_RUNTIME=RubyRacer
+
+    - rvm: 2.2
+      env: EXECJS_RUNTIME=Node
+    - rvm: 2.2
+      env: EXECJS_RUNTIME=Duktape
+    - rvm: 2.2
+      env: EXECJS_RUNTIME=RubyRacer
+
+    - rvm: 2.3.0
+      env: EXECJS_RUNTIME=Node
+    - rvm: 2.3.0
+      env: EXECJS_RUNTIME=Duktape
+    - rvm: 2.3.0
+      env: EXECJS_RUNTIME=RubyRacer
+
+    - rvm: jruby-19mode
+      env: EXECJS_RUNTIME=Node
+    - rvm: jruby-19mode
+      env: EXECJS_RUNTIME=RubyRhino
+
+    - os: osx
+      env: EXECJS_RUNTIME=JavaScriptCore
+    - os: osx
+      env: EXECJS_RUNTIME=Node
+    - os: osx
+      env: EXECJS_RUNTIME=Duktape
+    - os: osx
+      env: EXECJS_RUNTIME=RubyRacer
+    - os: osx
+      env: EXECJS_RUNTIME=V8

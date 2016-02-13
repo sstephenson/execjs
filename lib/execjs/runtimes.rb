@@ -1,5 +1,6 @@
 require "execjs/module"
 require "execjs/disabled_runtime"
+require "execjs/duktape_runtime"
 require "execjs/external_runtime"
 require "execjs/ruby_racer_runtime"
 require "execjs/ruby_rhino_runtime"
@@ -7,6 +8,8 @@ require "execjs/ruby_rhino_runtime"
 module ExecJS
   module Runtimes
     Disabled = DisabledRuntime.new
+
+    Duktape = DuktapeRuntime.new
 
     RubyRacer = RubyRacerRuntime.new
 
@@ -39,11 +42,18 @@ module ExecJS
       encoding:    'UTF-16LE' # CScript with //U returns UTF-16LE
     )
 
+    V8 = ExternalRuntime.new(
+      name:        "V8",
+      command:     "d8",
+      runner_path: ExecJS.root + "/support/v8_runner.js",
+      encoding:    'UTF-8'
+    )
+
 
     def self.autodetect
       from_environment || best_available ||
         raise(RuntimeUnavailable, "Could not find a JavaScript runtime. " +
-          "See https://github.com/sstephenson/execjs for a list of available runtimes.")
+          "See https://github.com/rails/execjs for a list of available runtimes.")
     end
 
     def self.best_available
@@ -52,15 +62,11 @@ module ExecJS
 
     def self.from_environment
       if name = ENV["EXECJS_RUNTIME"]
-        if runtime = const_get(name)
-          if runtime.available?
-            runtime if runtime.available?
-          else
-            raise RuntimeUnavailable, "#{runtime.name} runtime is not available on this system"
-          end
-        elsif !name.empty?
-          raise RuntimeUnavailable, "#{name} runtime is not defined"
-        end
+        raise RuntimeUnavailable, "#{name} runtime is not defined" unless const_defined?(name)
+        runtime = const_get(name)
+
+        raise RuntimeUnavailable, "#{runtime.name} runtime is not available on this system" unless runtime.available?
+        runtime
       end
     end
 
@@ -72,10 +78,12 @@ module ExecJS
       @runtimes ||= [
         RubyRacer,
         RubyRhino,
-        JavaScriptCore,
+        Duktape,
         Node,
+        JavaScriptCore,
         SpiderMonkey,
-        JScript
+        JScript,
+        V8
       ]
     end
   end
