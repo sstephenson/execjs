@@ -2,5 +2,7 @@ require "execjs/module"
 require "execjs/runtimes"
 
 module ExecJS
-  self.runtime ||= Runtimes.autodetect
+  def self.runtime
+    @runtime ||= Runtimes.autodetect
+  end
 end
