@@ -7,7 +7,7 @@ module ExecJS
         source = encode(source)
 
         @rhino_context = ::Rhino::Context.new
-        fix_memory_limit! @rhino_context
+        fix_memory_limit! @rhino_context if fix_memory_limit?
         @rhino_context.eval(source)
       rescue Exception => e
         raise wrap_error(e)
@@ -39,12 +39,12 @@ module ExecJS
 
       def unbox(value)
         case value = ::Rhino::to_ruby(value)
-        when Java::OrgMozillaJavascript::NativeFunction
+        when ::Rhino::JS::Function
           nil
-        when Java::OrgMozillaJavascript::NativeObject
+        when ::Rhino::JS::NativeObject
           value.inject({}) do |vs, (k, v)|
             case v
-            when Java::OrgMozillaJavascript::NativeFunction, ::Rhino::JS::Function
+            when ::Rhino::JS::Function
               nil
             else
               vs[k] = unbox(v)
@@ -80,6 +80,11 @@ module ExecJS
           else
             context.instance_eval { @native.setOptimizationLevel(-1) }
           end
+        end
+
+        def fix_memory_limit?
+          ! Rhino::Context.respond_to?(:default_optimization_level)
+          # added in 2.0.2 which auto-switches optimization level (to -1)
         end
     end
 
