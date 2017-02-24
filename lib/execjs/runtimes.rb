@@ -52,7 +52,7 @@ module ExecJS
 
     def self.from_environment
       if name = ENV["EXECJS_RUNTIME"]
-        if runtime = const_get(name)
+        if runtime = const_get(name).new
           if runtime.available?
             runtime if runtime.available?
           else
