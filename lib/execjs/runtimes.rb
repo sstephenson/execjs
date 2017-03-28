@@ -39,7 +39,34 @@ module ExecJS
       encoding:    'UTF-16LE' # CScript with //U returns UTF-16LE
     )
 
-
+    # JScript directly can't handle UTF-8 encoding string.
+    def JScript.exec_runtime(filename)
+      tempfile = Tempfile.open(['encoding_wrapper', '.js'])
+      tempfile.write <<-EOS
+        function execjs_read_file(filename, charset) {
+          var input = WScript.CreateObject("adodb.stream");
+          try {
+            input.type = 2;
+            input.charset = charset;
+            input.open();
+            input.loadFromFile(filename);
+            return input.readText();
+          } finally {
+            input.close();
+          }
+        }
+        try {
+          eval(execjs_read_file("#{filename}", "UTF-8"));
+        } catch(e) {
+          throw(e);
+        }
+      EOS
+      tempfile.close
+      super(tempfile.path)
+    ensure
+      tempfile.close!
+    end
+    
     def self.autodetect
       from_environment || best_available ||
         raise(RuntimeUnavailable, "Could not find a JavaScript runtime. " +
