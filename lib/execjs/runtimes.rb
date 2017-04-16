@@ -25,6 +25,12 @@ module ExecJS
       runner_path: ExecJS.root + "/support/jsc_runner.js"
     )
 
+    OSAScript = ExternalRuntime.new(
+      name:        "OSAScript",
+      command:     "osascript -l JavaScript",
+      runner_path: ExecJS.root + "/support/osascript_runner.js"
+    )
+
     SpiderMonkey = Spidermonkey = ExternalRuntime.new(
       name:        "SpiderMonkey",
       command:     "js",
@@ -74,6 +80,7 @@ module ExecJS
         RubyRhino,
         JavaScriptCore,
         Node,
+        OSAScript,
         SpiderMonkey,
         JScript
       ]
